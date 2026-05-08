@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OTC Signals">
+<link rel="manifest" href="manifest.json">
+<title>OTC Signal Bot — Pocket Option</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060912;
+    --bg2: #0d1221;
+    --bg3: #111827;
+    --panel: #0f1729;
+    --border: #1e2d4a;
+    --green: #00ff88;
+    --green2: #00cc66;
+    --red: #ff3358;
+    --red2: #cc1f3f;
+    --yellow: #ffcc00;
+    --blue: #0088ff;
+    --cyan: #00e5ff;
+    --text: #e0e8ff;
+    --muted: #4a5a7a;
+    --accent: #1a3a6a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,136,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,136,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 12px; }
+
+  /* ── Header ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0d1221, #111827);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--blue), var(--cyan), var(--green));
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 16px rgba(0,136,255,0.4);
+  }
+  .logo-text { line-height: 1.1; }
+  .logo-title { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--cyan); letter-spacing: 1px; }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px; font-weight: 600; color: var(--green);
+    letter-spacing: 1px;
+  }
+  .pulse-dot {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 6px var(--green);
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+
+  /* ── AI Control Panel ── */
+  .ai-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ai-panel::before {
+    content: 'AI ENGINE';
+    position: absolute; top: 12px; right: 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; color: var(--muted); letter-spacing: 2px;
+  }
+  .ai-panel h3 { font-size: 12px; color: var(--muted); letter-spacing: 2px; margin-bottom: 12px; text-transform: uppercase; }
+
+  .select-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  select {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5a7a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  select:focus { outline: none; border-color: var(--blue); }
+
+  .generate-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #0055cc, #0088ff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,136,255,0.3);
+  }
+  .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,136,255,0.5); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .generate-btn .btn-shine {
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+    animation: shine 2s infinite;
+  }
+  @keyframes shine { to { left: 150%; } }
+
+  /* ── Signal Card ── */
+  .signal-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: all .3s;
+  }
+  .signal-card.buy { border-color: rgba(0,255,136,.3); box-shadow: 0 0 24px rgba(0,255,136,.08); }
+  .signal-card.sell { border-color: rgba(255,51,88,.3); box-shadow: 0 0 24px rgba(255,51,88,.08); }
+  .signal-card.buy::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--green), var(--cyan)); }
+  .signal-card.sell::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--red), #ff8800); }
+
+  .signal-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .signal-pair { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 900; color: #fff; }
+  .signal-otc { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+  .signal-direction {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .signal-direction.buy { background: rgba(0,255,136,.12); color: var(--green); border: 1px solid rgba(0,255,136,.3); }
+  .signal-direction.sell { background: rgba(255,51,88,.12); color: var(--red); border: 1px solid rgba(255,51,88,.3); }
+
+  .signal-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .meta-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .meta-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-bottom: 4px; text-transform: uppercase; }
+  .meta-value { font-family: 'Share Tech Mono', monospace; font-size: 15px; color: var(--text); font-weight: 600; }
+  .meta-value.green { color: var(--green); }
+  .meta-value.yellow { color: var(--yellow); }
+
+  /* Countdown */
+  .countdown-wrap { text-align: center; }
+  .countdown-label { font-size: 10px; color: var(--muted); letter-spacing: 3px; margin-bottom: 8px; }
+  .countdown-ring { position: relative; width: 90px; height: 90px; margin: 0 auto 8px; }
+  .countdown-ring svg { transform: rotate(-90deg); }
+  .countdown-ring circle { fill: none; stroke-width: 5; transition: stroke-dashoffset .9s linear; }
+  .ring-bg { stroke: var(--border); }
+  .ring-fg { stroke: var(--cyan); stroke-linecap: round; }
+  .countdown-ring.buy .ring-fg { stroke: var(--green); }
+  .countdown-ring.sell .ring-fg { stroke: var(--red); }
+  .countdown-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900;
+  }
+  .countdown-num.buy { color: var(--green); }
+  .countdown-num.sell { color: var(--red); }
+  .countdown-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+
+  /* Signal Body */
+  .signal-body { display: flex; gap: 12px; align-items: center; }
+  .signal-info { flex: 1; }
+
+  /* Confidence bar */
+  .confidence-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .conf-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; min-width: 70px; }
+  .conf-bar-wrap { flex: 1; height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .conf-bar { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .conf-bar.high { background: linear-gradient(90deg, var(--green2), var(--green)); }
+  .conf-bar.mid { background: linear-gradient(90deg, #ff8800, var(--yellow)); }
+  .conf-pct { font-family: 'Share Tech Mono', monospace; font-size: 12px; min-width: 35px; text-align: right; }
+  .conf-pct.high { color: var(--green); }
+  .conf-pct.mid { color: var(--yellow); }
+
+  /* Reason box */
+  .reason-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #8899bb;
+    line-height: 1.5;
+  }
+
+  /* ── History ── */
+  .history-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .history-title { font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--cyan); }
+  .history-stats { display: flex; gap: 12px; }
+  .hstat { text-align: center; }
+  .hstat-val { font-family: 'Share Tech Mono', monospace; font-size: 16px; }
+  .hstat-val.green { color: var(--green); }
+  .hstat-val.red { color: var(--red); }
+  .hstat-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+  .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+  .history-list::-webkit-scrollbar { width: 3px; }
+  .history-list::-webkit-scrollbar-track { background: var(--bg2); }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .hist-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .hist-dir { font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .hist-dir.buy { background: rgba(0,255,136,.1); color: var(--green); }
+  .hist-dir.sell { background: rgba(255,51,88,.1); color: var(--red); }
+  .hist-pair { font-weight: 600; flex: 1; }
+  .hist-time { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); }
+  .hist-conf { font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+  .hist-conf.high { color: var(--green); }
+  .hist-conf.mid { color: var(--yellow); }
+
+  /* Loading */
+  .loading-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(6,9,18,.85);
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-spinner {
+    width: 60px; height: 60px;
+    border: 3px solid var(--border);
+    border-top-color: var(--cyan);
+    border-right-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Orbitron', monospace; font-size: 12px; color: var(--cyan); letter-spacing: 3px; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-text { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 20px;
+    font-size: 13px; color: var(--text);
+    transition: transform .3s; z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* PWA install banner */
+  .install-banner {
+    display: none;
+    background: linear-gradient(135deg, #001a44, #002266);
+    border: 1px solid rgba(0,136,255,.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    align-items: center; gap: 12px;
+    font-size: 13px;
+  }
+  .install-banner.show { display: flex; }
+  .install-banner button {
+    margin-left: auto; padding: 6px 16px;
+    background: var(--blue); border: none; border-radius: 8px;
+    color: #fff; font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  .slide-in { animation: slideIn .4s ease forwards; }
+  @keyframes slideIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">ANALYZING MARKET...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div class="logo-text">
+        <div class="logo-title">OTC SIGNAL BOT</div>
+        <div class="logo-sub">POCKET OPTION</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="pulse-dot"></div>
+      LIVE
+    </div>
+  </header>
+
+  <!-- Install Banner -->
+  <div class="install-banner" id="installBanner">
+    📲 Add to Home Screen for quick access
+    <button onclick="installPWA()">Install</button>
+  </div>
+
+  <!-- AI Control Panel -->
+  <div class="ai-panel">
+    <h3>Signal Generator</h3>
+    <div class="select-row">
+      <select id="pairSelect">
+        <option value="EUR/USD OTC">EUR/USD OTC</option>
+        <option value="GBP/USD OTC">GBP/USD OTC</option>
+        <option value="USD/JPY OTC">USD/JPY OTC</option>
+        <option value="AUD/USD OTC">AUD/USD OTC</option>
+        <option value="USD/CHF OTC">USD/CHF OTC</option>
+        <option value="NZD/USD OTC">NZD/USD OTC</option>
+        <option value="EUR/GBP OTC">EUR/GBP OTC</option>
+        <option value="EUR/JPY OTC">EUR/JPY OTC</option>
+        <option value="GBP/JPY OTC">GBP/JPY OTC</option>
+        <option value="USD/CAD OTC">USD/CAD OTC</option>
+      </select>
+      <select id="expSelect">
+        <option value="1">1 MIN</option>
+        <option value="2">2 MIN</option>
+        <option value="3" selected>3 MIN</option>
+        <option value="5">5 MIN</option>
+      </select>
+    </div>
+    <button class="generate-btn" id="generateBtn" onclick="generateSignal()">
+      <span class="btn-shine"></span>
+      ⚡ GENERATE SIGNAL
+    </button>
+  </div>
+
+  <!-- Signal display area -->
+  <div id="signalArea">
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div class="empty-text">Select a pair and expiry<br>then press Generate Signal<br>to get AI-powered OTC analysis</div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-panel">
+    <div class="history-header">
+      <div class="history-title">SIGNAL HISTORY</div>
+      <div class="history-stats">
+        <div class="hstat"><div class="hstat-val green" id="winCount">0</div><div class="hstat-lbl">SIGNALS</div></div>
+        <div class="hstat"><div class="hstat-val" id="avgConf" style="color:var(--cyan)">—</div><div class="hstat-lbl">AVG CONF</div></div>
+      </div>
+    </div>
+    <div class="history-list" id="historyList">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">No signals yet</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ This tool uses AI analysis for educational purposes only. OTC trading involves significant risk. Always manage your capital responsibly. Past signals do not guarantee future results.
+  </div>
+</div>
+
+<script>
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      document.getElementById('installBanner').classList.remove('show');
+      deferredPrompt = null;
+    });
+  }
+}
+
+// ── State ──
+let signals = [];
+let activeTimer = null;
+let timeLeft = 0;
+let totalDuration = 0;
+
+// ── Toast ──
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Signal Generation via Claude API ──
+async function generateSignal() {
+  const pair = document.getElementById('pairSelect').value;
+  const expiry = document.getElementById('expSelect').value;
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  try {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const dayOfWeek = now.toLocaleDateString('en-US', {weekday:'long'});
+
+    const prompt = `You are an expert binary options OTC (Over The Counter) signal analyst for Pocket Option trading platform. Analyze the following market conditions and generate a trading signal.
+
+Pair: ${pair}
+Expiry: ${expiry} minute(s)
+Current Time: ${timeStr}
+Day: ${dayOfWeek}
+
+Generate a professional OTC trading signal. Consider:
+- OTC markets operate 24/7 with simulated prices
+- Weekend OTC pairs have different volatility patterns
+- Typical technical indicators: RSI, MACD, Bollinger Bands, Support/Resistance
+- ${dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday' ? 'Weekend session — OTC markets tend to have unique patterns' : 'Weekday session active'}
+
+Respond ONLY with valid JSON, no markdown, no explanation outside JSON:
+{
+  "direction": "BUY" or "SELL",
+  "confidence": number between 65 and 95,
+  "strength": "HIGH" or "MEDIUM",
+  "entry_price_hint": "current market zone description in 4 words",
+  "reason": "2-3 sentence professional technical analysis explanation for this OTC signal",
+  "indicators": {
+    "rsi": number between 20 and 80,
+    "trend": "BULLISH" or "BEARISH" or "NEUTRAL",
+    "momentum": "STRONG" or "MODERATE" or "WEAK"
+  }
+}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error('API error');
+
+    const data = await response.json();
+    const rawText = data.content.map(c => c.text || '').join('');
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const signal = JSON.parse(clean);
+
+    signal.pair = pair;
+    signal.expiry = parseInt(expiry);
+    signal.time = new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+    signal.id = Date.now();
+
+    displaySignal(signal);
+    addToHistory(signal);
+
+  } catch (err) {
+    showToast('⚠️ Analysis failed. Try again.');
+    console.error(err);
+  } finally {
+    document.getElementById('loadingOverlay').classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+// ── Display Signal ──
+function displaySignal(signal) {
+  if (activeTimer) clearInterval(activeTimer);
+
+  const dir = signal.direction;
+  const isHigh = signal.confidence >= 80;
+  const confClass = isHigh ? 'high' : 'mid';
+  const dirIcon = dir === 'BUY' ? '▲' : '▼';
+
+  totalDuration = signal.expiry * 60;
+  timeLeft = totalDuration;
+
+  const r = 40; const circ = 2 * Math.PI * r;
+
+  const html = `
+  <div class="signal-card ${dir.toLowerCase()} slide-in">
+    <div class="signal-top">
+      <div>
+        <div class="signal-pair">${signal.pair.replace(' OTC','')}</div>
+        <div class="signal-otc">OTC MARKET</div>
+      </div>
+      <div class="signal-direction ${dir.toLowerCase()}">${dirIcon} ${dir}</div>
+    </div>
+
+    <div class="signal-body">
+      <div class="signal-info">
+        <div class="signal-meta">
+          <div class="meta-box">
+            <div class="meta-label">Expiry</div>
+            <div class="meta-value yellow">${signal.expiry}M</div>
+          </div>
+          <div class="meta-box">
+            <div class="meta-label">RSI</div>
+            <div class="meta-value">${signal.indicators?.rsi ?? '—'}</div>
+          </div>
+          <div class="meta-box">
+            <div class="meta-label">Trend</div>
+            <div class="meta-value" style="font-size:11px">${signal.indicators?.trend ?? '—'}</div>
+          </div>
+        </div>
+
+        <div class="confidence-row">
+          <div class="conf-label">CONFIDENCE</div>
+          <div class="conf-bar-wrap">
+            <div class="conf-bar ${confClass}" style="width:${signal.confidence}%"></div>
+          </div>
+          <div class="conf-pct ${confClass}">${signal.confidence}%</div>
+        </div>
+
+        <div class="confidence-row">
+          <div class="conf-label">MOMENTUM</div>
+          <div class="conf-bar-wrap">
+            <div class="conf-bar ${signal.indicators?.momentum === 'STRONG' ? 'high' : 'mid'}" style="width:${signal.indicators?.momentum === 'STRONG' ? '85' : signal.indicators?.momentum === 'MODERATE' ? '55' : '30'}%"></div>
+          </div>
+          <div class="conf-pct ${signal.indicators?.momentum === 'STRONG' ? 'high' : 'mid'}" style="font-size:10px">${signal.indicators?.momentum ?? '—'}</div>
+        </div>
+      </div>
+
+      <div class="countdown-wrap">
+        <div class="countdown-label">EXPIRES IN</div>
+        <div class="countdown-ring ${dir.toLowerCase()}" id="countdownRing">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle class="ring-bg" cx="45" cy="45" r="${r}" />
+            <circle class="ring-fg" id="ringFg" cx="45" cy="45" r="${r}"
+              stroke-dasharray="${circ}"
+              stroke-dashoffset="0" />
+          </svg>
+          <div class="countdown-num ${dir.toLowerCase()}" id="countdownNum">${signal.expiry}:00</div>
+        </div>
+        <div class="countdown-sub">SECONDS</div>
+        <div style="margin-top:8px;font-size:10px;color:var(--muted);">${signal.time}</div>
+      </div>
+    </div>
+
+    <div class="reason-box">🤖 ${signal.reason}</div>
+  </div>`;
+
+  document.getElementById('signalArea').innerHTML = html;
+
+  // Start countdown
+  activeTimer = setInterval(() => {
+    timeLeft--;
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    const num = document.getElementById('countdownNum');
+    const fg = document.getElementById('ringFg');
+    if (!num || !fg) { clearInterval(activeTimer); return; }
+    num.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    const progress = timeLeft / totalDuration;
+    fg.style.strokeDashoffset = circ * (1 - progress);
+
+    if (timeLeft <= 10) {
+      num.style.color = '#ffcc00';
+    }
+    if (timeLeft <= 0) {
+      clearInterval(activeTimer);
+      num.textContent = 'END';
+      num.style.color = 'var(--muted)';
+      showToast('⏰ Signal expired!');
+    }
+  }, 1000);
+}
+
+// ── History ──
+function addToHistory(signal) {
+  signals.unshift(signal);
+  if (signals.length > 20) signals.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!signals.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">No signals yet</div>';
+    return;
+  }
+
+  document.getElementById('winCount').textContent = signals.length;
+  const avgConf = Math.round(signals.reduce((s, x) => s + x.confidence, 0) / signals.length);
+  document.getElementById('avgConf').textContent = avgConf + '%';
+
+  list.innerHTML = signals.map(s => {
+    const isHigh = s.confidence >= 80;
+    return `<div class="hist-item">
+      <span class="hist-dir ${s.direction.toLowerCase()}">${s.direction}</span>
+      <span class="hist-pair">${s.pair.replace(' OTC','')}</span>
+      <span class="hist-time">${s.time}</span>
+      <span class="hist-conf ${isHigh ? 'high' : 'mid'}">${s.confidence}%</span>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
